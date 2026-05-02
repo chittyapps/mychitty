@@ -339,6 +339,15 @@ This keeps values, connectivity, and authority aligned instead of splitting ethi
 
 ## 5. Empirical starting state
 
+> **Amendment 2026-05-02 (verified by R1):** the table below was working corpus (per §1.3) and has been partially refuted by direct DB inspection. See `docs/verification/phase-0/01-ledger-spine.md` for the verified state of the ChittyLedger spine. Key corrections:
+>
+> - **`public.event_ledger` (the design-pinned canonical spine, not in this table) is live**: 224 rows, last write 2026-05-02, real P-Synthetic ChittyID `03-1-USA-8244-P-2603-0-33` already in production. The substrate is *not* dark for the spine itself — only for the three v1 substrates (Claude Code, OpenClaw, ChatGPT), which have written zero rows ever.
+> - `public.chitty_ledger_entries` is a **stale legacy table** (2 rows, last 2026-02-23), to be deprecated in favor of `event_ledger`. Spec's "0 rows" was approximately right; it is not the canonical spine.
+> - `chronicle_events` has **907 rows** (not 14 as reported below). Confirmed as a search/narrative projection (mutable, no `chitty_id`, no hash chain), not a candidate spine.
+> - `context.sessions / context.ledger / context.session_groups` live in Neon project **`ChittyOS-Core`**, not `ChittyLedger`. State to be confirmed in R3.
+>
+> The working-corpus table is preserved unchanged below for diff visibility.
+
 The working corpus reports the substrate as dark or stale:
 
 | Component                                                    | Observed state                          | v1 implication                                                |
@@ -352,7 +361,7 @@ The working corpus reports the substrate as dark or stale:
 | `chitty_contextual_topics`                                   | 404/500                                 | Not usable as v1 source of truth                              |
 | service hosts                                                | healthy                                 | service surfaces exist; writer/consumer wiring is the failure |
 
-Conclusion: v1 must own writes and provide direct verification reads. Broken read APIs must not block v1.
+Conclusion (revised post-R1): v1 must own writes from the three target substrates (Claude Code/OpenClaw/ChatGPT) into `public.event_ledger`, wire hash chain at the gateway layer, add signing + bonding columns via Migrations A/B (`migrations/0001_*.sql`, `migrations/0002_*.sql`), and provide direct verification reads. Broken legacy read APIs (`chitty_memory_recall`, `chitty_ledger_query`, `chitty_contextual_topics`) must not block v1; replace with direct Neon reads against `event_ledger`.
 
 ---
 
