@@ -78,6 +78,37 @@ ls migrations/ docs/verification/phase-0/
 #   "Apply migrations to default branch" (or "go default")
 ```
 
+## Inference-routing directive (2026-05-03)
+
+**User: "delegate all to CF gateway"** — route all LLM/inference traffic through the Cloudflare AI Gateway below. The gateway only handles inference; ledger writes still go via ChittyConnect to `event_ledger`.
+
+Cloudflare AI Gateway (OpenAI-compat):
+```
+https://gateway.ai.cloudflare.com/v1/0bc21e3a5a9de1a4cc843be9c3e98121/chittyclaw/compat/chat/completions
+```
+- Account: `0bc21e3a5a9de1a4cc843be9c3e98121` (ChittyCorp LLC)
+- Gateway name: `chittyclaw`
+- Use as OpenAI-compat **base URL** (strip `/chat/completions`):
+  ```
+  https://gateway.ai.cloudflare.com/v1/0bc21e3a5a9de1a4cc843be9c3e98121/chittyclaw/compat
+  ```
+
+Surfaces that need re-pointing (next session, in priority order):
+
+1. **OpenClaw substrate** — `~/.openclaw/config` `openai.baseURL` (or env `OPENAI_BASE_URL`) → gateway base URL. Per-provider: also `anthropic.baseURL` if CF gateway forwards Anthropic format (CF supports Anthropic via separate path: `/anthropic/v1`, not `/compat`).
+2. **ChittyConnect** — any inference proxies in `/home/ubuntu/projects/github.com/CHITTYOS/chittyconnect` (chitty_openai_chat, etc.) → upstream URL = gateway.
+3. **chittyagent-alchemist + sibling agents** — Worker env vars (`ANTHROPIC_BASE_URL`, `OPENAI_BASE_URL`) via `wrangler secret put` per service.
+4. **Claude Code project sessions** — set `ANTHROPIC_BASE_URL` if CF gateway has an Anthropic path; `claude.com/code` itself doesn't honor it, but `chittyagent-*` Workers and OpenClaw do.
+5. **ChatGPT connector / MCP wrappers** — point upstream model calls at gateway.
+
+Verification after re-pointing:
+- `curl -i $GATEWAY_BASE/chat/completions -H "Authorization: Bearer $KEY" -d '{"model":"gpt-5.4","messages":[{"role":"user","content":"ping"}]}'` should return 200.
+- Cloudflare AI Gateway dashboard at `dash.cloudflare.com` → AI → AI Gateway → `chittyclaw` should show traffic.
+
+**Auth note:** Cloudflare AI Gateway can be configured authenticated or pass-through. If authenticated, an AI Gateway token is required (separate from upstream model API key). Check `dash.cloudflare.com → AI → AI Gateway → chittyclaw → Settings`. Upstream provider key (Anthropic/OpenAI) still required either way.
+
+---
+
 ## Open task IDs in TaskList
 
 - #2 R2 ChittyConnect Route Surface — pending
