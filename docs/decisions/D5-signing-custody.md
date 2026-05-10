@@ -1,7 +1,14 @@
 # D5 — Event Signing Custody
 
-**Status:** PROPOSED — awaiting user decision
+**Status:** ACCEPTED — Option A (ChittyAuth) on 2026-05-10
 **Date:** 2026-05-10
+
+## Accepted resolution
+
+- **Custody:** Option A — ChittyAuth owns event signing.
+- **Q1 — `signer_cid`:** mint a dedicated service ChittyID (`chittyauth-event-signer`) — not reused from ChittyAuth's OAuth service identity. Clean audit separation.
+- **Q2 — JWKS surface:** shared `auth.chitty.cc/.well-known/jwks.json` with `kid` namespace `evt-*`.
+- **Q3 — failure mode:** fail-closed. Gateway returns 503 on ChittyAuth unreachability; event is not written; caller retries.
 **Blocks:** D2 (gateway shape), D3 (sequence allocation), D4 (sponsor_bond), every v1 event with `signer_cid`/`signature_proof`/`signature_alg`/`signature_kid`
 **Spec:** `docs/specs/mychitty-v1-light-the-substrate.md` §11.2 — defers to "ChittyConnect signing model" which does not exist
 **Related findings:** R2 (ChittyConnect is a router, not a signer), R4 (no signing-key flow anywhere), R5 §1.2
