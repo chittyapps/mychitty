@@ -1,7 +1,45 @@
 # D2 — v1 Producer Gateway Shape
 
-**Status:** PROPOSED — awaiting user decision
+**Status:** ACCEPTED — claim existing `ledger.chitty.cc` (CHITTYFOUNDATION/chittyledger) as v1 producer
 **Date:** 2026-05-10
+
+## Accepted resolution
+
+After registry/grep discovery of live namespaces (`gateway.chitty.cc` is the meta-gateway; `ledger.chitty.cc` is **already a deployed Worker** named `chittyledger`), the original A/B/C options were superseded by a fourth: **claim the existing `chittyledger` Worker as the v1 producer.**
+
+**Why this beats Option B (new gateway service):**
+- `chittyledger`'s CHARTER.md already names hash chain, sequence enforcement, and signature verification as core responsibilities — adding the v1 producer is *literally what the charter says it does*, no charter rewrite needed.
+- Already has Bearer auth + KV service-token store + `NEON_DATABASE_URL` binding + chittytrack tail consumer. Zero infra to provision.
+- Avoids creating the parallel-pipeline anti-pattern documented in R2 (a second worker fronting the same DB).
+- Existing `POST /entries` writes legacy `chitty_ledger_entries` (R4 finding 6); those routes become deprecated, and the v1 routes ship at `/v1/*`. One Worker, two semantics, one of them sunsetting.
+
+**Q1 (URL):** `ledger.chitty.cc/v1/*` — existing Worker, new route prefix.
+**Q2 (Repo):** `CHITTYFOUNDATION/chittyledger/api/` — existing repo, additive only.
+**Q3 (Outbox):** same-DB table `public.synthesis_outbox` in ChittyLedger — transactional with the event INSERT, no new service.
+
+## Implementation impact
+
+The original sketch (new repo `CHITTYOS/chittyledger-gateway`) is replaced by an additive change to `CHITTYFOUNDATION/chittyledger/api/src/`:
+
+```
+chittyledger/api/src/
+  index.ts                  # existing — add /v1/* mount
+  v1/                       # new
+    mcp.ts                  # MCP server: bind_session, write_event, ...
+    sign-client.ts          # POST auth.chitty.cc/v1/sign (D5)
+    sequence.ts             # D3 allocator
+    hash.ts                 # payload_hash + event_hash + chain link
+    ledger-write.ts         # v1 INSERT path → public.event_ledger
+    outbox.ts               # enqueue → public.synthesis_outbox
+    types.ts                # zod CanonicalEvent etc.
+  routes/
+    entries.ts              # existing legacy /entries — mark @deprecated
+```
+
+Phase 1 first task = scaffold `chittyledger/api/src/v1/` + register a service ChittyID for `signer_cid` as part of D5 implementation.
+
+---
+
 **Blocks:** D3 (sequence allocation), D6 (legacy row strategy), Phase 1 scaffold
 **Depends on:** D5 ACCEPTED (ChittyAuth signs events)
 **Related findings:** R2 (ChittyConnect is a router), R4 (alchemist is the only writer; 3 repos, 1 drifted; no outbox; legacy v0 schema only), R5 §1.2
