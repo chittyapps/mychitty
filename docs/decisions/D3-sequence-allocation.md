@@ -1,7 +1,17 @@
 # D3 — Sequence Allocation
 
-**Status:** PROPOSED — awaiting user decision
+**Status:** ACCEPTED — Option A on 2026-05-11
 **Date:** 2026-05-10
+
+## Accepted resolution
+
+- **Allocator:** Option A — `pg_advisory_xact_lock(hashtextextended(chitty_id || '|' || scope, 0))` + `INSERT ... SELECT COALESCE(MAX(sequence),0)+1 FROM event_ledger WHERE chitty_id=$1 AND scope=$2`. Lock auto-released at COMMIT.
+- **Q1 — UNIQUE constraint (Mig C):** YES. Ship `ALTER TABLE event_ledger ADD CONSTRAINT event_ledger_chain_seq_uniq UNIQUE (chitty_id, scope, sequence)` as Migration C alongside Phase 1 work. Belt-and-suspenders.
+- **Q2 — Scope vocabulary:** keep existing 4 (`{private,shared,project,global}`) per `event_ledger_scope_check`. Refine later only if a real need surfaces.
+- **Q3 — `prev_hash` linkage:** per-chain — same partition as `sequence`, namely `(chitty_id, scope)`. Aligns with `idx_event_ledger_chain_replay`.
+
+---
+
 **Blocks:** v1 INSERT path on `ledger.chitty.cc/v1/*`
 **Depends on:** D2 ACCEPTED (gateway lives in chittyledger Worker)
 **Spec source:** Migration B `event_ledger.sequence` COMMENT — *"Per-(chitty_id, scope) monotonic sequence number; populated by gateway at write time"* — and partial index `idx_event_ledger_chain_replay ON (chitty_id, scope, sequence) WHERE sequence IS NOT NULL`.
