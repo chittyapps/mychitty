@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mychitty-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-03-29",
+  "routes": [
+    {
+      "pattern": "api.mychitty.com/*",
+      "custom_domain": true
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "mychitty",
+  "version": "1.0.0",
+  "description": "MyChitty API Worker",
+  "main": "src/index.ts",
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "wrangler": "^3.0.0",
+    "@cloudflare/workers-types": "^4.20230419.0"
+  }
+}
