@@ -1,0 +1,18 @@
+{
+  "name": "chittyclaw-extract",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EXTRACT shim for MyChitty: Pulls chittyclaw gateway logs and maps them to CanonicalEvent NDJSON.",
+  "main": "src/dry-run.ts",
+  "scripts": {
+    "dry-run": "ts-node src/dry-run.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0"
+  }
+}

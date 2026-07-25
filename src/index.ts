@@ -19,30 +19,17 @@ export default {
       return new Response('OK', { status: 200 });
     }
 
-    if (path === '/whoami') {
-      const payload = {
-        entity: {
-          chitty_id: "03-1-USA-7087-A-2607-0-35",
-          role: "SessionCoordinator",
-          status: "ACTIVE"
-        },
-        auth: {
-          chittyconnect_token: "chitty_sk_cluster_local_99x",
-          sovereignty_cert: "-----BEGIN CERTIFICATE-----\nMIIDdD...\n-----END CERTIFICATE-----"
-        },
-        state: {
-          active_context_id: "7259d24b-bbba-4b58-a95e-a4337b0f2422",
-          last_memory_flush: new Date().toISOString()
-        }
-      };
-
-      return Response.json(payload, {
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Content-Type': 'application/json'
-        }
-      });
-    }
+    // /whoami is intentionally absent.
+    //
+    // MyChitty is a CONSUMER of the identity plane — ChittyAuth (auth.chitty.cc)
+    // for tokens/JWKS, ChittyID (id.chitty.cc) for identity, ChittyCert
+    // (cert.chitty.cc) for the canonical JWKS registry per D7, ChittyLedger for
+    // events. It is not a substitute for any of them.
+    //
+    // The previous implementation returned a hardcoded ChittyID, a fabricated
+    // service token and a truncated placeholder certificate. That is fake auth
+    // material and must not exist in the tree. Reinstate this route only as a
+    // real consumer call against a live ChittyAuth, validated end-to-end.
 
     return new Response('Not Found', { status: 404 });
   }
